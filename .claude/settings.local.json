@@ -6,7 +6,11 @@
       "Bash(terraform plan *)",
       "Bash(terraform fmt *)",
       "Bash(git checkout *)",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(terraform providers *)",
+      "Bash(ls -la /tmp_schema.json)",
+      "Bash(grep -c \"private_dns_zone\" /tmp_schema.json)",
+      "Bash(echo \"exit:$?\")"
     ]
   }
 }
