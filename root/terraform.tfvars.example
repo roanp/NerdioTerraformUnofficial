@@ -1,0 +1,199 @@
+# -----------------
+# Basics
+# -----------------
+
+resource_group_name = "rg-nerdio-nmw-{unique_suffix}"
+azuread_app_name = "nerdio-nmw-app-{unique_suffix}"
+azure_environment = "AzureCloud" #AzureCloud, AzureUSGovernment, AzureChinaCloud
+subscription_display_name = "My Production Subscription"
+
+# Disable access and ID token issuance for implicit grant and hybrid flows.
+# Set to false only to restore the legacy enabled behavior.
+disable_implicit_grant_token_issuance = true
+
+location = "westeurope"
+azure_tag_prefix = "NMW"
+
+protect_resources = true
+
+# -----------------
+# Application
+# -----------------
+
+app_service_plan_sku_name="B3"
+
+app_service_plan_name = "{app-name}-plan-{unique_suffix}"
+web_app_portal_name   = "{app-name}-{unique_suffix}"
+logs_law_name = "{app-name}-law-{unique_suffix}"
+law_name              = "{app-name}-law-insights-{unique_suffix}"
+app_insights_name     = "{app-name}-insights-{unique_suffix}"
+automation_account_name = "{app-name}-automation-{unique_suffix}"
+scripted_action_account_name = "{app-name}-scripted-actions-{unique_suffix}"
+
+# -----------------
+# Database
+# -----------------
+
+sql_server_name = "{app-name}-sql-{unique_suffix}"
+database_name   = "{app-name}-db"
+sql_collation   = "SQL_Latin1_General_CP1_CI_AS"
+database_max_size_gb = 250
+database_sku_name = "S1"
+
+# -----------------
+# Storage
+# -----------------
+
+key_vault_name = "{app-name}-kv-{unique_suffix}"
+data_protection_storage_account_name = "dps{unique_suffix}"
+data_protection_keys_blob_name = "keys-{unique_suffix}.xml"
+data_protection_key_name = "DataProtection-{unique_suffix}"
+
+# -----------------
+# Certificate
+# -----------------
+
+# Self-signed certificate in Key Vault for Azure AD app authentication
+# (used for features that do not support Managed Identity)
+app_cert_name            = "nme-app-cert"
+app_cert_lifetime_months = 4  # ~120 days; key is reused on renewal
+
+# -----------------
+# Networking
+# -----------------
+
+configure_private_endpoints = false
+private_web_app             = false
+
+# Required when configure_private_endpoints = true
+# deployment_vnet_name           = "{deployment-vnet-name}"
+# deployment_resource_group_name = "{deployment-rg-name}"
+
+# Extra delay (seconds) after private DNS resolves before proceeding.
+# Increase to 60-180 if initial deploy fails with 403 ForbiddenByConnection.
+# private_endpoint_post_resolve_delay = 0
+
+network_config = {
+  vnet_name       = "{app-name}-private-vnet"
+  vnet_cidr       = "10.200.0.0/16"
+  pe_subnet_name  = "{app-name}-privateendpoints-subnet"
+  pe_subnet_cidr  = "10.200.1.0/24"
+  app_subnet_name = "{app-name}-subnet"
+  app_subnet_cidr = "10.200.2.0/27"
+}
+
+# -----------------
+# Tags / misc
+# -----------------
+
+tags_by_resource = {
+  # Tags are keyed by Azure resource provider type.
+  # Each key maps to a map of tag name => tag value.
+  # Only include entries for resource types you want to tag.
+  #
+  # Supported resource type keys:
+  #   Microsoft.Web/serverfarms
+  #   Microsoft.Web/sites
+  #   Microsoft.KeyVault/vaults
+  #   Microsoft.Sql/servers
+  #   Microsoft.Sql/servers/databases
+  #   Microsoft.OperationalInsights/workspaces
+  #   Microsoft.Insights/components
+  #   Microsoft.Insights/dataCollectionEndpoints
+  #   Microsoft.Insights/dataCollectionRules
+  #   Microsoft.Storage/storageAccounts
+  #   Microsoft.Automation/automationAccounts
+  #   Microsoft.Network/virtualNetworks
+  #   Microsoft.Network/privateEndpoints
+  #   Microsoft.Network/privateDnsZones
+  #   Microsoft.Network/privateDnsZones/virtualNetworkLinks
+  #
+  # Example:
+  # "Microsoft.Web/sites" = {
+  #   environment         = "production"
+  #   cost-center         = "engineering"
+  #   data-classification = "internal"
+  # }
+  # "Microsoft.Sql/servers" = {
+  #   environment         = "production"
+  #   data-classification = "confidential"
+  # }
+}
+
+# -----------------
+# App Role Assignments (Optional)
+# -----------------
+# Assign users to Azure AD application roles created by the install script.
+# Requires ARM_CLIENT_ID, ARM_CLIENT_SECRET, and ARM_TENANT_ID environment variables to be set.
+# 
+# Available roles:
+#   - Reviewer:     View access to all areas of NME; no ability to save or make changes
+#   - HelpDesk:     Complete access to User sessions only
+#   - DesktopAdmin: Complete access to User sessions, ability to view Host Pools and hosts
+#   - WvdAdmin:     Complete access to all areas of NME
+#   - RestClient:   Rest client access (for service principals/applications)
+# 
+# Example:
+# app_role_assignments = {
+#   "WvdAdmin"     = ["admin@contoso.com", "admin2@contoso.com"]
+#   "Reviewer"     = ["viewer1@contoso.com", "viewer2@contoso.com"]
+#   "HelpDesk"     = ["helpdesk@contoso.com"]
+#   "DesktopAdmin" = ["desktopadmin@contoso.com"]
+# }
+
+app_role_assignments = {}
+
+# -----------------
+# Optional CCL module (disabled by default)
+# -----------------
+# Deploys an independent App Service, Key Vault, Storage Account, Log Analytics
+# Workspace, and Application Insights alongside the core NME service. No Azure AD
+# app registration is created — that is configured manually once resources exist.
+
+deploy_ccl_module = false
+
+# By default the CCL Web App runs on the existing core NME App Service Plan
+# (no separate plan/SKU needed). Set to false and provide the two vars below
+# for a dedicated CCL plan instead.
+ccl_use_existing_app_service_plan = true
+
+# Required when deploy_ccl_module = true:
+# ccl_app_name             = "nmw-ccl-app-{unique_suffix}"
+# ccl_key_vault_name       = "nmw-ccl-kv-{unique_suffix}"
+# ccl_storage_account_name = "stnccl{unique_suffix}"
+# ccl_law_name             = "nmw-ccl-law-{unique_suffix}"
+# ccl_app_insights_name    = "nmw-ccl-app-insights-{unique_suffix}"
+
+# Required when deploy_ccl_module = true and ccl_use_existing_app_service_plan = false:
+# ccl_app_service_plan_name     = "nmw-ccl-app-plan-{unique_suffix}"
+# ccl_app_service_plan_sku_name = "B1"
+
+# Requires configure_private_endpoints = true above (reuses that same network):
+# private_ccl_app = false
+
+# -----------------
+# Optional RTI module (disabled by default)
+# -----------------
+# Deploys an independent App Service, Key Vault, Storage Account, Log Analytics
+# Workspace, Application Insights, and SQL Server/Database alongside the core
+# NME service. Unlike CCL, RTI gets its own dedicated App Service Plan (sized
+# for its polling workload). No Azure AD app registration is created — that
+# is configured manually once resources exist. The SQL Server's own
+# system-assigned managed identity is granted Microsoft Graph Directory.Read.All.
+
+deploy_rti_module = false
+
+# Required when deploy_rti_module = true:
+# rti_app_name                  = "nmw-rti-app-{unique_suffix}"
+# rti_app_service_plan_name     = "nmw-rti-plan-{unique_suffix}"
+# rti_app_service_plan_sku_name = "P0v3"
+# rti_key_vault_name            = "nmw-rti-kv-{unique_suffix}"
+# rti_storage_account_name      = "stnrti{unique_suffix}"
+# rti_law_name                  = "nmw-rti-law-{unique_suffix}"
+# rti_app_insights_name         = "nmw-rti-app-insights-{unique_suffix}"
+# rti_sql_server_name           = "nmw-rti-sql-{unique_suffix}"
+# rti_database_name             = "rti-{unique_suffix}"
+# rti_database_sku_name         = "S2"
+
+# Requires configure_private_endpoints = true above (reuses that same network):
+# private_rti_app = false

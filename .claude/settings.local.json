@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(terraform validate *)",
+      "Bash(terraform init *)",
+      "Bash(terraform plan *)",
+      "Bash(terraform fmt *)",
+      "Bash(git checkout *)",
+      "Bash(python3 -c ' *)"
+    ]
+  }
+}

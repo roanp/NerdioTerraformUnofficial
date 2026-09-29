@@ -1,0 +1,4 @@
+commands.rp
+root/.terraform/
+root/terraform.tfvars
+root/.terraform.lock.hcl
