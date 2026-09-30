@@ -192,7 +192,7 @@ resource "null_resource" "sql_user_setup" {
               throw "Principal '$PrincipalName' has a duplicate display name in Microsoft Entra ID. This means two Entra ID objects (e.g. an orphaned app registration/service principal left over from a prior failed or reset deployment) share this exact name. Find and delete the one that is NOT tracked in Terraform state, then re-apply. Original error: $msg"
             }
             if ($msg -match 'does not exist or you do not have permission' -and $i -lt $MaxAttempts) {
-              Write-Host "Attempt $i/$MaxAttempts: principal '$PrincipalName' not yet resolvable in Entra ID (replication delay). Retrying in $DelaySeconds s..."
+              Write-Host "Attempt $i/$${MaxAttempts}: principal '$PrincipalName' not yet resolvable in Entra ID (replication delay). Retrying in $DelaySeconds s..."
               Start-Sleep -Seconds $DelaySeconds
               continue
             }
