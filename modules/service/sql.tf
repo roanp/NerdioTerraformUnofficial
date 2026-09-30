@@ -173,6 +173,35 @@ resource "null_resource" "sql_user_setup" {
           try { $sqlToken = [System.Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr) } finally { [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr) }
       }
 
+      $connectionString = "Data Source=tcp:${azurerm_mssql_server.sql_server.fully_qualified_domain_name},1433;Initial Catalog=${azurerm_mssql_database.database.name};Persist Security Info=False;Multiple Active Result Sets=False;Connect Timeout=30;Encrypt=True;Trust Server Certificate=False"
+
+      # A freshly-created Azure AD principal can take a short while to replicate
+      # before Azure SQL's "FROM EXTERNAL PROVIDER" lookup can resolve it by
+      # display name. Retry on that specific transient failure; a genuine
+      # duplicate display name is not retryable and fails fast with guidance.
+      function Invoke-SqlUserBootstrap {
+        param($ConnectionString, $AccessToken, $Query, $PrincipalName, $MaxAttempts = 10, $DelaySeconds = 15)
+        for ($i = 1; $i -le $MaxAttempts; $i++) {
+          try {
+            Invoke-Sqlcmd -ConnectionString $ConnectionString -AccessToken $AccessToken -Query $Query -ErrorAction Stop
+            return
+          }
+          catch {
+            $msg = $_.Exception.Message
+            if ($msg -match 'duplicate display name') {
+              throw "Principal '$PrincipalName' has a duplicate display name in Microsoft Entra ID. This means two Entra ID objects (e.g. an orphaned app registration/service principal left over from a prior failed or reset deployment) share this exact name. Find and delete the one that is NOT tracked in Terraform state, then re-apply. Original error: $msg"
+            }
+            if ($msg -match 'does not exist or you do not have permission' -and $i -lt $MaxAttempts) {
+              Write-Host "Attempt $i/$MaxAttempts: principal '$PrincipalName' not yet resolvable in Entra ID (replication delay). Retrying in $DelaySeconds s..."
+              Start-Sleep -Seconds $DelaySeconds
+              continue
+            }
+            throw
+          }
+        }
+        throw "Timed out waiting for principal '$PrincipalName' to become resolvable in Entra ID after $MaxAttempts attempts."
+      }
+
       $query = @"
       IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = '$spName')
       BEGIN
@@ -183,12 +212,12 @@ resource "null_resource" "sql_user_setup" {
       ALTER ROLE db_datawriter ADD MEMBER [$spName];
       "@
 
-      Invoke-Sqlcmd -ConnectionString "Data Source=tcp:${azurerm_mssql_server.sql_server.fully_qualified_domain_name},1433;Initial Catalog=${azurerm_mssql_database.database.name};Persist Security Info=False;Multiple Active Result Sets=False;Connect Timeout=30;Encrypt=True;Trust Server Certificate=False" -AccessToken $sqlToken -Query $query
+      Invoke-SqlUserBootstrap -ConnectionString $connectionString -AccessToken $sqlToken -Query $query -PrincipalName $spName
 
       Write-Host "SQL user setup completed for '$spName'"
 
       # Create SQL user for web app managed identity (when enabled)
-      
+
       $miQuery = @"
       IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = '$miName')
       BEGIN
@@ -199,7 +228,7 @@ resource "null_resource" "sql_user_setup" {
       ALTER ROLE db_datawriter ADD MEMBER [$miName];
       "@
 
-      Invoke-Sqlcmd -ConnectionString "Data Source=tcp:${azurerm_mssql_server.sql_server.fully_qualified_domain_name},1433;Initial Catalog=${azurerm_mssql_database.database.name};Persist Security Info=False;Multiple Active Result Sets=False;Connect Timeout=30;Encrypt=True;Trust Server Certificate=False" -AccessToken $sqlToken -Query $miQuery
+      Invoke-SqlUserBootstrap -ConnectionString $connectionString -AccessToken $sqlToken -Query $miQuery -PrincipalName $miName
 
       Write-Host "SQL user setup completed for managed identity '$miName'"
     EOT
