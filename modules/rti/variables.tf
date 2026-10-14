@@ -164,6 +164,17 @@ variable "blob_private_dns_zone_id" {
   }
 }
 
+variable "table_private_dns_zone_id" {
+  description = "ID of the existing Table Storage private DNS zone from modules/service. Required when configure_private_endpoints = true."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.configure_private_endpoints == false || var.table_private_dns_zone_id != null
+    error_message = "table_private_dns_zone_id is required when configure_private_endpoints is true."
+  }
+}
+
 variable "app_service_private_dns_zone_id" {
   description = "ID of the existing App Service private DNS zone from modules/service. Required when configure_private_endpoints = true."
   type        = string

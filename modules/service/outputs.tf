@@ -220,6 +220,11 @@ output "sql_private_dns_zone_id" {
   value       = var.configure_private_endpoints ? azurerm_private_dns_zone.sql[0].id : null
 }
 
+output "table_private_dns_zone_id" {
+  description = "The ID of the Table Storage private DNS zone (for other modules to attach additional private endpoints to)"
+  value       = var.configure_private_endpoints ? azurerm_private_dns_zone.table[0].id : null
+}
+
 # Data Collection outputs
 output "data_collection_endpoint_id" {
   description = "The ID of the Data Collection Endpoint"

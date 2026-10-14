@@ -10,6 +10,7 @@ locals {
 
       sql_private_dns         = "privatelink.database.windows.net"
       blob_private_dns        = "privatelink.blob.core.windows.net"
+      table_private_dns       = "privatelink.table.core.windows.net"
       file_private_dns        = "privatelink.file.core.windows.net"
       app_service_private_dns = "privatelink.azurewebsites.net"
       key_vault_private_dns   = "privatelink.vaultcore.azure.net"
@@ -25,6 +26,7 @@ locals {
 
       sql_private_dns         = "privatelink.database.usgovcloudapi.net"
       blob_private_dns        = "privatelink.blob.core.usgovcloudapi.net"
+      table_private_dns       = "privatelink.table.core.usgovcloudapi.net"
       file_private_dns        = "privatelink.file.core.usgovcloudapi.net"
       app_service_private_dns = "privatelink.azurewebsites.us"
       key_vault_private_dns   = "privatelink.vaultcore.usgovcloudapi.net"
@@ -40,6 +42,7 @@ locals {
 
       sql_private_dns         = "privatelink.database.chinacloudapi.cn"
       blob_private_dns        = "privatelink.blob.core.chinacloudapi.cn"
+      table_private_dns       = "privatelink.table.core.chinacloudapi.cn"
       file_private_dns        = "privatelink.file.core.chinacloudapi.cn"
       app_service_private_dns = "privatelink.chinacloudsites.cn"
       key_vault_private_dns   = "privatelink.vaultcore.azure.cn"
@@ -63,6 +66,7 @@ locals {
 
   sql_private_dns_zone_name         = local._env.sql_private_dns
   blob_private_dns_zone_name        = local._env.blob_private_dns
+  table_private_dns_zone_name       = local._env.table_private_dns
   file_private_dns_zone_name        = local._env.file_private_dns
   app_service_private_dns_zone_name = local._env.app_service_private_dns
   key_vault_private_dns_zone_name   = local._env.key_vault_private_dns

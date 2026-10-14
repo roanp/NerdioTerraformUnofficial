@@ -136,6 +136,7 @@ module "rti" {
   app_subnet_id                       = module.service.app_subnet_id
   key_vault_private_dns_zone_id       = module.service.key_vault_private_dns_zone_id
   blob_private_dns_zone_id            = module.service.blob_private_dns_zone_id
+  table_private_dns_zone_id           = module.service.table_private_dns_zone_id
   app_service_private_dns_zone_id     = module.service.app_service_private_dns_zone_id
   sql_private_dns_zone_id             = module.service.sql_private_dns_zone_id
 }

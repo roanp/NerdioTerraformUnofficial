@@ -51,6 +51,27 @@ resource "azurerm_private_endpoint" "rti_storage_blob" {
   }
 }
 
+resource "azurerm_private_endpoint" "rti_storage_table" {
+  count               = var.configure_private_endpoints ? 1 : 0
+  name                = "${var.rti_storage_account_name}-table-pe"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  subnet_id           = var.private_endpoints_subnet_id
+  tags                = lookup(var.tags_by_resource, "Microsoft.Network/privateEndpoints", {})
+
+  private_service_connection {
+    name                           = "${var.rti_storage_account_name}-table-pls"
+    private_connection_resource_id = azurerm_storage_account.rti_storage.id
+    is_manual_connection           = false
+    subresource_names              = ["table"]
+  }
+
+  private_dns_zone_group {
+    name                 = "default"
+    private_dns_zone_ids = [var.table_private_dns_zone_id]
+  }
+}
+
 resource "azurerm_management_lock" "rti_storage_lock" {
   count      = var.protect_resources ? 1 : 0
   name       = "${var.rti_storage_account_name}-lock"

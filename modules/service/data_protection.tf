@@ -182,3 +182,31 @@ resource "azurerm_private_endpoint" "storage_blob" {
     private_dns_zone_ids = [azurerm_private_dns_zone.data_protection[0].id]
   }
 }
+
+# Table storage private DNS zone. Not used by this module's own (blob-only)
+# data protection storage account — created here, shared, so other modules
+# (e.g. modules/rti) can attach their own Table service private endpoints to it.
+resource "azurerm_private_dns_zone" "table" {
+  count               = var.configure_private_endpoints ? 1 : 0
+  name                = local.table_private_dns_zone_name
+  resource_group_name = var.resource_group_name
+  tags                = lookup(var.tags_by_resource, "Microsoft.Network/privateDnsZones", {})
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "table" {
+  count                = var.configure_private_endpoints ? 1 : 0
+  name                 = "${var.network_config.vnet_name}-link"
+  private_dns_zone_id  = azurerm_private_dns_zone.table[0].id
+  virtual_network_id   = azurerm_virtual_network.private_endpoints_vnet[0].id
+  tags                 = lookup(var.tags_by_resource, "Microsoft.Network/privateDnsZones/virtualNetworkLinks", {})
+  registration_enabled = false
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "table_deployment" {
+  count                = var.configure_private_endpoints && var.deployment_vnet_name != null ? 1 : 0
+  name                 = "${var.deployment_vnet_name}-deployment-link"
+  private_dns_zone_id  = azurerm_private_dns_zone.table[0].id
+  virtual_network_id   = data.azurerm_virtual_network.deployment_vnet[0].id
+  tags                 = lookup(var.tags_by_resource, "Microsoft.Network/privateDnsZones/virtualNetworkLinks", {})
+  registration_enabled = false
+}
