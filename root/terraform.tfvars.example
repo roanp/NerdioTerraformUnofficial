@@ -82,6 +82,17 @@ network_config = {
   app_subnet_cidr = "10.200.2.0/27"
 }
 
+# If your organization centrally manages private DNS zones (e.g. a shared DNS hub
+# resource group), point this at that resource group instead of letting this
+# module create its own zones. The zones must already exist there with their
+# standard names (privatelink.vaultcore.azure.net, privatelink.blob.core.windows.net,
+# privatelink.table.core.windows.net, privatelink.azurewebsites.net,
+# privatelink.database.windows.net, privatelink.azure-automation.net, or the
+# cloud-specific equivalents). This deployment will only read them and link its own
+# VNet to them — it will never create, modify, or delete them. Leave commented out
+# to have this module create its own zones (default behavior).
+# private_dns_zone_resource_group_name = "RG-PrivateDNS"
+
 # -----------------
 # Tags / misc
 # -----------------

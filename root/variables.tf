@@ -99,6 +99,12 @@ variable "network_config" {
   default = null
 }
 
+variable "private_dns_zone_resource_group_name" {
+  description = "Resource group of pre-existing, externally-managed private DNS zones (e.g. a centrally-shared DNS hub) to use instead of creating new ones. When set, the zones are only read and linked to this deployment's VNet — never created, modified, or deleted. Leave null to have this module create its own zones (default behavior)."
+  type        = string
+  default     = null
+}
+
 variable "private_web_app" {
   description = "Whether the Web App should be accessible only via private endpoint"
   type        = bool

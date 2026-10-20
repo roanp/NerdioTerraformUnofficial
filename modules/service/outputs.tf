@@ -202,27 +202,27 @@ output "app_subnet_id" {
 
 output "key_vault_private_dns_zone_id" {
   description = "The ID of the Key Vault private DNS zone (for other modules to attach additional private endpoints to)"
-  value       = var.configure_private_endpoints ? azurerm_private_dns_zone.key_vault[0].id : null
+  value       = local.key_vault_private_dns_zone_id
 }
 
 output "blob_private_dns_zone_id" {
   description = "The ID of the Blob Storage private DNS zone (for other modules to attach additional private endpoints to)"
-  value       = var.configure_private_endpoints ? azurerm_private_dns_zone.data_protection[0].id : null
+  value       = local.blob_private_dns_zone_id
 }
 
 output "app_service_private_dns_zone_id" {
   description = "The ID of the App Service private DNS zone (for other modules to attach additional private endpoints to)"
-  value       = var.configure_private_endpoints ? azurerm_private_dns_zone.app_service[0].id : null
+  value       = local.app_service_private_dns_zone_id
 }
 
 output "sql_private_dns_zone_id" {
   description = "The ID of the SQL Server private DNS zone (for other modules to attach additional private endpoints to)"
-  value       = var.configure_private_endpoints ? azurerm_private_dns_zone.sql[0].id : null
+  value       = local.sql_private_dns_zone_id
 }
 
 output "table_private_dns_zone_id" {
   description = "The ID of the Table Storage private DNS zone (for other modules to attach additional private endpoints to)"
-  value       = var.configure_private_endpoints ? azurerm_private_dns_zone.table[0].id : null
+  value       = local.table_private_dns_zone_id
 }
 
 # Data Collection outputs

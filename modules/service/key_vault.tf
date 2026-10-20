@@ -115,7 +115,7 @@ resource "azurerm_key_vault_secret" "deployment_locks_container_sas_url" {
 }
 
 resource "azurerm_private_dns_zone" "key_vault" {
-  count               = var.configure_private_endpoints ? 1 : 0
+  count               = var.configure_private_endpoints && !local.use_existing_private_dns_zones ? 1 : 0
   name                = local.key_vault_private_dns_zone_name
   resource_group_name = var.resource_group_name
   tags                = lookup(var.tags_by_resource, "Microsoft.Network/privateDnsZones", {})
@@ -124,7 +124,7 @@ resource "azurerm_private_dns_zone" "key_vault" {
 resource "azurerm_private_dns_zone_virtual_network_link" "key_vault" {
   count                = var.configure_private_endpoints ? 1 : 0
   name                 = "${var.network_config.vnet_name}-link"
-  private_dns_zone_id  = azurerm_private_dns_zone.key_vault[0].id
+  private_dns_zone_id  = local.key_vault_private_dns_zone_id
   virtual_network_id   = azurerm_virtual_network.private_endpoints_vnet[0].id
   tags                 = lookup(var.tags_by_resource, "Microsoft.Network/privateDnsZones/virtualNetworkLinks", {})
   registration_enabled = false
@@ -133,7 +133,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "key_vault" {
 resource "azurerm_private_dns_zone_virtual_network_link" "key_vault_deployment" {
   count                = var.configure_private_endpoints && var.deployment_vnet_name != null ? 1 : 0
   name                 = "${var.deployment_vnet_name}-deployment-link"
-  private_dns_zone_id  = azurerm_private_dns_zone.key_vault[0].id
+  private_dns_zone_id  = local.key_vault_private_dns_zone_id
   virtual_network_id   = data.azurerm_virtual_network.deployment_vnet[0].id
   tags                 = lookup(var.tags_by_resource, "Microsoft.Network/privateDnsZones/virtualNetworkLinks", {})
   registration_enabled = false
@@ -156,6 +156,6 @@ resource "azurerm_private_endpoint" "key_vault" {
 
   private_dns_zone_group {
     name                 = "default"
-    private_dns_zone_ids = [azurerm_private_dns_zone.key_vault[0].id]
+    private_dns_zone_ids = [local.key_vault_private_dns_zone_id]
   }
 }

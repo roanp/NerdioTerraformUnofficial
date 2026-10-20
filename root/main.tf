@@ -43,6 +43,7 @@ module "service" {
   deployment_vnet_name                 = var.deployment_vnet_name
   deployment_resource_group_name       = var.deployment_resource_group_name
   network_config                       = var.network_config
+  private_dns_zone_resource_group_name = var.private_dns_zone_resource_group_name
   private_web_app                      = var.private_web_app
   web_app_portal_name                  = var.web_app_portal_name
   app_service_plan_name                = var.app_service_plan_name

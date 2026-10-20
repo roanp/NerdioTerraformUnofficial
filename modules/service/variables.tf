@@ -65,8 +65,8 @@ variable "configure_private_endpoints" {
 
 variable "deployment_vnet_name" {
   description = "VNet from which Terraform deployment will be executed. Required when configure_private_endpoints = true."
-  type    = string
-  default = null
+  type        = string
+  default     = null
 
   validation {
     condition     = var.configure_private_endpoints == false || var.deployment_vnet_name != null
@@ -76,8 +76,8 @@ variable "deployment_vnet_name" {
 
 variable "deployment_resource_group_name" {
   description = "Resource group of the deployment VNet. Required when configure_private_endpoints = true."
-  type    = string
-  default = null
+  type        = string
+  default     = null
 
   validation {
     condition     = var.configure_private_endpoints == false || var.deployment_resource_group_name != null
@@ -101,6 +101,12 @@ variable "network_config" {
     condition     = var.configure_private_endpoints == false || var.network_config != null
     error_message = "network_config is required when configure_private_endpoints is true."
   }
+}
+
+variable "private_dns_zone_resource_group_name" {
+  description = "Resource group of pre-existing, externally-managed private DNS zones (e.g. a centrally-shared DNS hub) to use instead of creating new ones. When set, this module only reads the zones and links its own VNet to them — it never creates, modifies, or deletes them. The zones must already exist there with their standard names (privatelink.vaultcore.azure.net, privatelink.blob.core.windows.net, privatelink.table.core.windows.net, privatelink.azurewebsites.net, privatelink.database.windows.net, privatelink.azure-automation.net, or the cloud-specific equivalents). Leave null to have this module create its own zones (default behavior)."
+  type        = string
+  default     = null
 }
 
 variable "private_web_app" {
@@ -167,7 +173,7 @@ variable "data_protection_storage_account_name" {
 variable "data_protection_key_name" {
   description = "Name of the Data Protection Key"
   type        = string
-  default = "DataProtection-main"
+  default     = "DataProtection-main"
 }
 
 variable "maintenance_service_url" {
@@ -228,7 +234,7 @@ variable "private_endpoint_post_resolve_delay" {
   validation {
     condition     = var.private_endpoint_post_resolve_delay >= 0 && floor(var.private_endpoint_post_resolve_delay) == var.private_endpoint_post_resolve_delay
     error_message = "private_endpoint_post_resolve_delay must be a non-negative whole number of seconds (e.g. 0, 30, 60)."
-  }  
+  }
 }
 
 variable "app_cert_name" {

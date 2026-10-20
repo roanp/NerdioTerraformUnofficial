@@ -13,6 +13,7 @@ This Terraform configuration deploys [Nerdio Manager for Enterprise (NME)](https
 - [Inputs](#inputs)
 - [Outputs](#outputs)
 - [Configure private endpoints](#configure-private-endpoints)
+- [Using Centrally-Managed Private DNS Zones](#using-centrally-managed-private-dns-zones)
 - [Using a Pre-Existing VNet and Subnets](#using-a-pre-existing-vnet-and-subnets)
 - [Offline / Disconnected Package Install](#offline--disconnected-package-install)
 - [Operational Notes](#operational-notes)
@@ -489,6 +490,20 @@ network_config = {
 | `deployment_vnet_name` | Yes (when PE enabled) | Name of the pre-existing VNet where the Terraform runner is located. The module creates VNet peering and links all private DNS zones to this VNet |
 | `deployment_resource_group_name` | Yes (when PE enabled) | Resource group of the deployment VNet |
 | `network_config` | Yes (when PE enabled) | Object defining VNet and subnet names/CIDRs for the NME private network |
+| `private_dns_zone_resource_group_name` | No | Resource group of pre-existing, centrally-managed private DNS zones to use instead of creating new ones (see [Using Centrally-Managed Private DNS Zones](#using-centrally-managed-private-dns-zones)). Defaults to `null`, meaning the module creates its own zones |
+
+## Using Centrally-Managed Private DNS Zones
+
+Some organizations manage private DNS zones centrally (e.g. a shared "DNS hub" resource group) rather than letting each deployment create its own. Set `private_dns_zone_resource_group_name` to that resource group's name to use this mode.
+
+When set, the module:
+- **Reads** the six zones it needs via data source lookup (`privatelink.vaultcore.azure.net`, `privatelink.blob.core.windows.net`, `privatelink.table.core.windows.net`, `privatelink.azurewebsites.net`, `privatelink.database.windows.net`, `privatelink.azure-automation.net`, or the cloud-specific equivalents) — they must already exist in that resource group with those exact names.
+- **Creates** its own VNet links from the NME private-endpoints VNet (and the deployment VNet, if configured) into those zones, same as it always does.
+- **Never creates, modifies, or deletes the zones themselves.** This is deliberate: centrally-managed zones are typically linked from many VNets/subscriptions, so this deployment must never be able to delete a zone that something else depends on — `terraform destroy` here will remove this deployment's VNet links but leave the zones untouched.
+
+Leave `private_dns_zone_resource_group_name` unset (the default) to have the module create and own its own zones instead, exactly as before.
+
+**Permissions**: the identity running Terraform needs read access to the zones and write access to create `virtualNetworkLinks` child resources under them in `private_dns_zone_resource_group_name` (e.g. the `Private DNS Zone Contributor` role on that resource group).
 
 ## Using a Pre-Existing VNet and Subnets
 
