@@ -145,7 +145,7 @@ resource "azurerm_private_dns_zone" "data_protection" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "data_protection" {
-  count                = var.configure_private_endpoints ? 1 : 0
+  count                = var.configure_private_endpoints && !contains(var.existing_private_dns_zone_vnet_links, "blob") ? 1 : 0
   name                 = "${var.network_config.vnet_name}-link"
   private_dns_zone_id  = local.blob_private_dns_zone_id
   virtual_network_id   = azurerm_virtual_network.private_endpoints_vnet[0].id
@@ -154,7 +154,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "data_protection" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "data_protection_deployment" {
-  count                = var.configure_private_endpoints && var.deployment_vnet_name != null ? 1 : 0
+  count                = var.configure_private_endpoints && !contains(var.existing_private_dns_zone_vnet_links, "blob") && var.deployment_vnet_name != null ? 1 : 0
   name                 = "${var.deployment_vnet_name}-deployment-link"
   private_dns_zone_id  = local.blob_private_dns_zone_id
   virtual_network_id   = data.azurerm_virtual_network.deployment_vnet[0].id
@@ -194,7 +194,7 @@ resource "azurerm_private_dns_zone" "table" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "table" {
-  count                = var.configure_private_endpoints ? 1 : 0
+  count                = var.configure_private_endpoints && !contains(var.existing_private_dns_zone_vnet_links, "table") ? 1 : 0
   name                 = "${var.network_config.vnet_name}-link"
   private_dns_zone_id  = local.table_private_dns_zone_id
   virtual_network_id   = azurerm_virtual_network.private_endpoints_vnet[0].id
@@ -203,7 +203,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "table" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "table_deployment" {
-  count                = var.configure_private_endpoints && var.deployment_vnet_name != null ? 1 : 0
+  count                = var.configure_private_endpoints && !contains(var.existing_private_dns_zone_vnet_links, "table") && var.deployment_vnet_name != null ? 1 : 0
   name                 = "${var.deployment_vnet_name}-deployment-link"
   private_dns_zone_id  = local.table_private_dns_zone_id
   virtual_network_id   = data.azurerm_virtual_network.deployment_vnet[0].id

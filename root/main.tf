@@ -44,6 +44,7 @@ module "service" {
   deployment_resource_group_name       = var.deployment_resource_group_name
   network_config                       = var.network_config
   vnet_resource_group_name             = var.vnet_resource_group_name
+  existing_private_dns_zone_vnet_links = var.existing_private_dns_zone_vnet_links
   private_dns_zone_resource_group_name = var.private_dns_zone_resource_group_name
   private_web_app                      = var.private_web_app
   web_app_portal_name                  = var.web_app_portal_name

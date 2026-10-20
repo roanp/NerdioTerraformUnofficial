@@ -491,6 +491,8 @@ network_config = {
 | `deployment_resource_group_name` | Yes (when PE enabled) | Resource group of the deployment VNet |
 | `network_config` | Yes (when PE enabled) | Object defining VNet and subnet names/CIDRs for the NME private network |
 | `private_dns_zone_resource_group_name` | No | Resource group of pre-existing, centrally-managed private DNS zones to use instead of creating new ones (see [Using Centrally-Managed Private DNS Zones](#using-centrally-managed-private-dns-zones)). Defaults to `null`, meaning the module creates its own zones |
+| `vnet_resource_group_name` | No | Resource group the private-endpoints VNet/subnets live in, when different from `resource_group_name` (see [Using a Pre-Existing VNet and Subnets](#using-a-pre-existing-vnet-and-subnets)) |
+| `existing_private_dns_zone_vnet_links` | No | Set of zone keys (`key_vault`, `blob`, `table`, `app_service`, `sql`, `automation`) whose VNet link(s) already exist and should be skipped. Use when a pre-existing VNet is already linked to some zones elsewhere — see below |
 
 ## Using Centrally-Managed Private DNS Zones
 
@@ -504,6 +506,19 @@ When set, the module:
 Leave `private_dns_zone_resource_group_name` unset (the default) to have the module create and own its own zones instead, exactly as before.
 
 **Permissions**: the identity running Terraform needs read access to the zones and write access to create `virtualNetworkLinks` child resources under them in `private_dns_zone_resource_group_name` (e.g. the `Private DNS Zone Contributor` role on that resource group).
+
+### If a zone is already linked to your VNet
+
+A given VNet can only be linked to a given private DNS zone **once** — Azure rejects a second link for the same zone/VNet pair with a `Conflict` error, regardless of what name Terraform gives it. This commonly happens when using an existing, already-in-production VNet (see [Using a Pre-Existing VNet and Subnets](#using-a-pre-existing-vnet-and-subnets) below) that's already integrated with the same central DNS zones for other purposes.
+
+If you hit this, set `existing_private_dns_zone_vnet_links` to the affected zone key(s) so this module skips creating a link for them:
+
+```hcl
+# Example: the automation zone is already linked to this VNet elsewhere
+existing_private_dns_zone_vnet_links = ["automation"]
+```
+
+This is per-zone deliberately — **check which links already succeeded in Terraform state before setting this** (`terraform state list | grep private_dns_zone_virtual_network_link`). Only list zones that genuinely already have a link; listing a zone that Terraform already created a link for will make Terraform destroy that (needed, working) link on the next apply.
 
 ## Using a Pre-Existing VNet and Subnets
 

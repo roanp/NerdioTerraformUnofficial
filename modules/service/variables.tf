@@ -109,6 +109,17 @@ variable "vnet_resource_group_name" {
   default     = null
 }
 
+variable "existing_private_dns_zone_vnet_links" {
+  description = "Zone keys whose VNet link(s) already exist and should not be created by this module — both the NME vnet link and the deployment vnet link (where applicable) are skipped for each listed zone. Use this when a pre-existing VNet (or deployment VNet) is already linked to some of these zones elsewhere (e.g. a shared production VNet already integrated with a central DNS hub) — creating a duplicate link for the same zone/VNet pair fails with a Conflict error from Azure. Valid values: key_vault, blob, table, app_service, sql, automation."
+  type        = set(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for z in var.existing_private_dns_zone_vnet_links : contains(["key_vault", "blob", "table", "app_service", "sql", "automation"], z)])
+    error_message = "existing_private_dns_zone_vnet_links may only contain: key_vault, blob, table, app_service, sql, automation."
+  }
+}
+
 variable "private_dns_zone_resource_group_name" {
   description = "Resource group of pre-existing, externally-managed private DNS zones (e.g. a centrally-shared DNS hub) to use instead of creating new ones. When set, this module only reads the zones and links its own VNet to them — it never creates, modifies, or deletes them. The zones must already exist there with their standard names (privatelink.vaultcore.azure.net, privatelink.blob.core.windows.net, privatelink.table.core.windows.net, privatelink.azurewebsites.net, privatelink.database.windows.net, privatelink.azure-automation.net, or the cloud-specific equivalents). Leave null to have this module create its own zones (default behavior)."
   type        = string
