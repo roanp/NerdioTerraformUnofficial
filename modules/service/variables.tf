@@ -64,25 +64,15 @@ variable "configure_private_endpoints" {
 }
 
 variable "deployment_vnet_name" {
-  description = "VNet from which Terraform deployment will be executed. Required when configure_private_endpoints = true."
+  description = "VNet from which Terraform deployment will be executed, used to peer it to the private-endpoints VNet so the deployment machine can reach the new private endpoints. Leave null if there is no separate deployment network — e.g. when Terraform already runs from (or otherwise already has network access to) the same VNet used for private endpoints. When null, this module creates no peering and no 'deployment' VNet link for any zone."
   type        = string
   default     = null
-
-  validation {
-    condition     = var.configure_private_endpoints == false || var.deployment_vnet_name != null
-    error_message = "deployment_vnet_name is required when configure_private_endpoints is true."
-  }
 }
 
 variable "deployment_resource_group_name" {
-  description = "Resource group of the deployment VNet. Required when configure_private_endpoints = true."
+  description = "Resource group of the deployment VNet. Required only when deployment_vnet_name is set."
   type        = string
   default     = null
-
-  validation {
-    condition     = var.configure_private_endpoints == false || var.deployment_resource_group_name != null
-    error_message = "deployment_resource_group_name is required when configure_private_endpoints is true."
-  }
 }
 
 variable "network_config" {

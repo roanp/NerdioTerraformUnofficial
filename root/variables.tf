@@ -75,13 +75,13 @@ variable "configure_private_endpoints" {
 }
 
 variable "deployment_vnet_name" {
-  description = "VNet from which TF deployment is executed. Required when configure_private_endpoints = true."
+  description = "VNet from which TF deployment is executed, used to peer it to the private-endpoints VNet. Leave null if there is no separate deployment network (e.g. Terraform already runs from the same VNet used for private endpoints) — no peering or 'deployment' DNS zone links are created in that case."
   type        = string
   default     = null
 }
 
 variable "deployment_resource_group_name" {
-  description = "Resource group from which TF deployment is executed. Required when configure_private_endpoints = true."
+  description = "Resource group of the deployment VNet. Required only when deployment_vnet_name is set."
   type        = string
   default     = null
 }
