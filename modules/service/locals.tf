@@ -75,6 +75,13 @@ locals {
   private_endpoints_subnet_id = var.configure_private_endpoints ? azurerm_subnet.private_endpoints[0].id : null
   app_subnet_id               = var.configure_private_endpoints ? azurerm_subnet.app[0].id : null
 
+  # Resource group the private-endpoints VNet and its subnets live in. Defaults to
+  # the main resource group (original behavior); set vnet_resource_group_name when
+  # importing an existing VNet that lives in a separate, dedicated networking
+  # resource group — otherwise Terraform sees a resource_group_name mismatch and
+  # plans to destroy and recreate the VNet in the wrong resource group.
+  vnet_resource_group_name = coalesce(var.vnet_resource_group_name, var.resource_group_name)
+
   # When private_dns_zone_resource_group_name is set, private DNS zones are treated as
   # pre-existing and externally managed (e.g. a centrally-shared DNS hub) — this module
   # only reads them and links its own VNet to them, never creates or destroys them.

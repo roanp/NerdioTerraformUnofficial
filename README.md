@@ -538,6 +538,14 @@ network_config = {
 }
 ```
 
+**If the existing VNet lives in a different resource group** than `resource_group_name` (e.g. a dedicated networking/hub resource group), also set:
+
+```hcl
+vnet_resource_group_name = "<resource-group-the-vnet-actually-lives-in>"
+```
+
+⚠️ **This is not optional if the resource groups differ.** `resource_group_name` is a force-replacement property for `azurerm_virtual_network` — if you skip this and the VNet's real resource group doesn't match, Terraform will plan to **destroy** the imported VNet and recreate it in the wrong resource group. If anything is still attached to its subnets (VMs, other private endpoints, etc.), the destroy will fail loudly; if nothing is attached, it will **succeed and delete your real VNet**. Always run `terraform plan` (Step 3 below) and confirm it shows no changes before applying.
+
 Also set the deployment VNet variables (required when private endpoints are enabled):
 
 ```hcl
@@ -577,6 +585,7 @@ The plan should show **no changes** for the three networking resources. If it sh
 | Symptom | Fix |
 |---|---|
 | Name or CIDR mismatch | Correct the `network_config` values in `terraform.tfvars` to exactly match the deployed resource |
+| Plan shows the VNet (and/or subnets) will be **destroyed and recreated** | The VNet's real resource group doesn't match `resource_group_name`. Set `vnet_resource_group_name` to the resource group the VNet actually lives in — **do not apply** until the plan shows no changes |
 | Subnet delegation missing | Add the `Microsoft.Web/serverFarms` delegation to the existing app subnet before importing |
 | `private_endpoint_network_policies` differs | Set the policy to `RouteTableEnabled` on both subnets in the Azure portal or CLI before importing |
 | Missing `Microsoft.KeyVault` service endpoint on app subnet | Add the service endpoint to the existing app subnet before importing |

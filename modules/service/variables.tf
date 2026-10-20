@@ -103,6 +103,12 @@ variable "network_config" {
   }
 }
 
+variable "vnet_resource_group_name" {
+  description = "Resource group where the private-endpoints VNet and its subnets live. Defaults to resource_group_name (original behavior, module creates the VNet alongside everything else). Set this when importing an existing VNet that lives in a separate, dedicated networking resource group — otherwise Terraform will see a resource_group_name mismatch on the imported VNet and plan to destroy and recreate it in the wrong resource group."
+  type        = string
+  default     = null
+}
+
 variable "private_dns_zone_resource_group_name" {
   description = "Resource group of pre-existing, externally-managed private DNS zones (e.g. a centrally-shared DNS hub) to use instead of creating new ones. When set, this module only reads the zones and links its own VNet to them — it never creates, modifies, or deletes them. The zones must already exist there with their standard names (privatelink.vaultcore.azure.net, privatelink.blob.core.windows.net, privatelink.table.core.windows.net, privatelink.azurewebsites.net, privatelink.database.windows.net, privatelink.azure-automation.net, or the cloud-specific equivalents). Leave null to have this module create its own zones (default behavior)."
   type        = string

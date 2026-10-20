@@ -99,6 +99,12 @@ variable "network_config" {
   default = null
 }
 
+variable "vnet_resource_group_name" {
+  description = "Resource group where the private-endpoints VNet and its subnets live. Defaults to resource_group_name (module creates the VNet alongside everything else). Set this when importing an existing VNet that lives in a separate, dedicated networking resource group — otherwise Terraform will see a resource_group_name mismatch on the imported VNet and plan to destroy and recreate it in the wrong resource group."
+  type        = string
+  default     = null
+}
+
 variable "private_dns_zone_resource_group_name" {
   description = "Resource group of pre-existing, externally-managed private DNS zones (e.g. a centrally-shared DNS hub) to use instead of creating new ones. When set, the zones are only read and linked to this deployment's VNet — never created, modified, or deleted. Leave null to have this module create its own zones (default behavior)."
   type        = string
