@@ -58,6 +58,7 @@ module "service" {
   logs_law_name                        = var.logs_law_name
   scripted_action_account_name         = var.scripted_action_account_name
   data_protection_storage_account_name = var.data_protection_storage_account_name
+  custom_scripts_storage_account_name  = var.custom_scripts_storage_account_name
   data_protection_keys_blob_name       = var.data_protection_keys_blob_name
   data_protection_key_name             = var.data_protection_key_name
   maintenance_service_url              = var.maintenance_service_url

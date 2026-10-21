@@ -94,6 +94,21 @@ output "storage_account_primary_blob_endpoint" {
   value       = azurerm_storage_account.data_protection.primary_blob_endpoint
 }
 
+output "custom_scripts_storage_account_id" {
+  description = "The ID of the Custom Scripts Storage Account"
+  value       = azurerm_storage_account.custom_scripts.id
+}
+
+output "custom_scripts_storage_account_name" {
+  description = "The name of the Custom Scripts Storage Account"
+  value       = azurerm_storage_account.custom_scripts.name
+}
+
+output "custom_scripts_storage_account_primary_blob_endpoint" {
+  description = "The primary blob endpoint of the Custom Scripts Storage Account"
+  value       = azurerm_storage_account.custom_scripts.primary_blob_endpoint
+}
+
 # Application Insights outputs
 output "app_insights_id" {
   description = "The ID of Application Insights"

@@ -140,6 +140,7 @@ The `modules/service` module deploys and configures:
 - **Storage**
   - Data protection storage account
   - Private containers for data protection keys and locks
+  - Custom scripts storage account (tagged `NMW_OBJECT_TYPE = CUSTOM_SCRIPTS_STORAGE_ACCOUNT` so NME finds and reuses it instead of auto-creating one on first VM deployment)
 - **Automation**
   - Two Automation Accounts (updates and scripted actions)
   - Imported runbook (`nmwUpdateRunAs`)
@@ -326,6 +327,7 @@ tags_by_resource = {
 | `scripted_action_account_name` | `string` | Name for the Automation Account (scripted actions) |
 | `data_protection_storage_account_name` | `string` | Name for the Storage Account (data protection keys) |
 | `data_protection_keys_blob_name` | `string` | Name of the blob file where data protection keys are stored |
+| `custom_scripts_storage_account_name` | `string` | Name for the Storage Account used for custom scripts during VM/session-host customization |
 
 ### Optional
 

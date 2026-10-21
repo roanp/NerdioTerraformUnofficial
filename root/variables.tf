@@ -178,6 +178,11 @@ variable "data_protection_storage_account_name" {
   type        = string
 }
 
+variable "custom_scripts_storage_account_name" {
+  description = "Name for the Storage Account used for custom scripts during VM/session-host customization. Normally auto-created by NME on first VM deployment — pre-creating it here (tagged so NME finds and reuses it) avoids that implicit creation."
+  type        = string
+}
+
 variable "data_protection_keys_blob_name" {
   description = "Name of the blob file where Data Protection keys are stored"
   type        = string
