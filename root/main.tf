@@ -113,10 +113,8 @@ module "rti" {
   tags_by_resource  = var.tags_by_resource
 
   # The existing NME app's service principal — granted a SQL user in the RTI
-  # database, and added to the RTI SQL Server's Azure AD admin group, so Nerdio
-  # Manager itself can connect to it and pass its own "enable RTI" permission check.
-  nme_service_principal_name      = var.azuread_app_name
-  nme_service_principal_object_id = module.service.azuread_service_principal_id
+  # database so Nerdio Manager itself can connect to it.
+  nme_service_principal_name = var.azuread_app_name
 
   rti_app_name                  = var.rti_app_name
   rti_app_service_plan_name     = var.rti_app_service_plan_name
