@@ -1,28 +1,24 @@
-# Azure SQL only supports a single Azure AD administrator principal (user, service
-# principal, or group) — not multiple individual principals. To give both the
-# deploying principal and the NME app's service principal admin rights on this
-# server, the admin is a group containing both, rather than an individual principal.
-#
 # Nerdio Manager's "enable RTI" screen validates permissions against its own service
 # principal (var.nme_service_principal_name / nme_service_principal_object_id) and,
-# empirically, requires it to be a SQL admin — granular db_ddladmin/db_datareader/
-# db_datawriter roles (which is what every other database in this template uses) were
-# not sufficient for that specific check.
-resource "azuread_group" "rti_sql_admins" {
-  display_name     = "${var.rti_sql_server_name}-admins"
-  security_enabled = true
-}
-
-resource "azuread_group_member" "rti_sql_admins_deployer" {
-  group_object_id  = azuread_group.rti_sql_admins.object_id
-  member_object_id = data.azurerm_client_config.current.object_id
-}
-
-resource "azuread_group_member" "rti_sql_admins_nme_app" {
-  group_object_id  = azuread_group.rti_sql_admins.object_id
-  member_object_id = var.nme_service_principal_object_id
-}
-
+# empirically, requires it to be the SQL Server's Azure AD admin — granular
+# db_ddladmin/db_datareader/db_datawriter roles (what every other database in this
+# template uses) were not sufficient for that specific check.
+#
+# Azure SQL only supports a single Azure AD admin principal, and creating an Azure AD
+# group to hold multiple admins is not an option here (requires Graph permissions this
+# deployment doesn't have, and is its own security-review item). So the admin is kept
+# as the deploying principal here (azuread_administrator below) — required so the
+# null_resource.rti_sql_user_setup script, which authenticates as the deploying
+# principal, has rights to create the contained users below — and then
+# null_resource.promote_nme_app_sql_admin flips the real Azure AD admin to nme_app
+# afterwards via Azure PowerShell, once those users already exist.
+# lifecycle.ignore_changes stops Terraform from reverting that flip back to the
+# deploying principal on later plans.
+#
+# Caveat: once nme_app is the real admin, the deploying principal no longer has rights
+# to create additional SQL users here. If rti_sql_user_setup ever needs to re-run in
+# the future (e.g. the RTI web app is replaced, requiring a new managed-identity SQL
+# user), the deploying principal would need to be temporarily restored as admin first.
 resource "azurerm_mssql_server" "rti_sql_server" {
   name                          = var.rti_sql_server_name
   resource_group_name           = var.resource_group_name
@@ -32,10 +28,14 @@ resource "azurerm_mssql_server" "rti_sql_server" {
   public_network_access_enabled = var.configure_private_endpoints ? false : true
 
   azuread_administrator {
-    login_username              = azuread_group.rti_sql_admins.display_name
-    object_id                   = azuread_group.rti_sql_admins.object_id
+    login_username              = data.azuread_service_principal.current.display_name
+    object_id                   = data.azurerm_client_config.current.client_id
     tenant_id                   = data.azurerm_client_config.current.tenant_id
     azuread_authentication_only = true
+  }
+
+  lifecycle {
+    ignore_changes = [azuread_administrator]
   }
 
   identity {
@@ -249,5 +249,42 @@ resource "null_resource" "rti_sql_user_setup" {
     azurerm_mssql_firewall_rule.rti_allow_deployer_ip,
     azuread_app_role_assignment.rti_sql_directory_read_all,
     null_resource.wait_for_rti_sql_private_dns,
+  ]
+}
+
+# Flips the RTI SQL Server's real Azure AD admin to the NME app's service principal,
+# once rti_sql_user_setup has already created the contained users above (while the
+# deploying principal was still admin). Combined with the ignore_changes lifecycle
+# block on azurerm_mssql_server.rti_sql_server, this persists across future applies
+# instead of being reverted back to the deploying principal.
+resource "null_resource" "promote_nme_app_sql_admin" {
+  triggers = {
+    sql_server_id     = azurerm_mssql_server.rti_sql_server.id
+    nme_app_object_id = var.nme_service_principal_object_id
+    nme_app_name      = var.nme_service_principal_name
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["pwsh", "-Command"]
+    command     = <<-EOT
+      $ErrorActionPreference = 'Stop'
+
+      # Authenticate to Azure using ARM env vars
+      . '${path.module}/scripts/connect-azure.ps1' -Environment '${var.azure_environment}' -SubscriptionId '${data.azurerm_client_config.current.subscription_id}'
+
+      Write-Host "Setting Azure AD admin on '${var.rti_sql_server_name}' to '${var.nme_service_principal_name}' ..."
+
+      Set-AzSqlServerActiveDirectoryAdministrator `
+        -ResourceGroupName '${var.resource_group_name}' `
+        -ServerName '${var.rti_sql_server_name}' `
+        -DisplayName '${var.nme_service_principal_name}' `
+        -ObjectId '${var.nme_service_principal_object_id}'
+
+      Write-Host "Azure AD admin set to '${var.nme_service_principal_name}'"
+    EOT
+  }
+
+  depends_on = [
+    null_resource.rti_sql_user_setup,
   ]
 }
