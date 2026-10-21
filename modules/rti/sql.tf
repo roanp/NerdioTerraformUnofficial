@@ -1,3 +1,28 @@
+# Azure SQL only supports a single Azure AD administrator principal (user, service
+# principal, or group) — not multiple individual principals. To give both the
+# deploying principal and the NME app's service principal admin rights on this
+# server, the admin is a group containing both, rather than an individual principal.
+#
+# Nerdio Manager's "enable RTI" screen validates permissions against its own service
+# principal (var.nme_service_principal_name / nme_service_principal_object_id) and,
+# empirically, requires it to be a SQL admin — granular db_ddladmin/db_datareader/
+# db_datawriter roles (which is what every other database in this template uses) were
+# not sufficient for that specific check.
+resource "azuread_group" "rti_sql_admins" {
+  display_name     = "${var.rti_sql_server_name}-admins"
+  security_enabled = true
+}
+
+resource "azuread_group_member" "rti_sql_admins_deployer" {
+  group_object_id  = azuread_group.rti_sql_admins.object_id
+  member_object_id = data.azurerm_client_config.current.object_id
+}
+
+resource "azuread_group_member" "rti_sql_admins_nme_app" {
+  group_object_id  = azuread_group.rti_sql_admins.object_id
+  member_object_id = var.nme_service_principal_object_id
+}
+
 resource "azurerm_mssql_server" "rti_sql_server" {
   name                          = var.rti_sql_server_name
   resource_group_name           = var.resource_group_name
@@ -7,8 +32,8 @@ resource "azurerm_mssql_server" "rti_sql_server" {
   public_network_access_enabled = var.configure_private_endpoints ? false : true
 
   azuread_administrator {
-    login_username              = data.azuread_service_principal.current.display_name
-    object_id                   = data.azurerm_client_config.current.client_id
+    login_username              = azuread_group.rti_sql_admins.display_name
+    object_id                   = azuread_group.rti_sql_admins.object_id
     tenant_id                   = data.azurerm_client_config.current.tenant_id
     azuread_authentication_only = true
   }

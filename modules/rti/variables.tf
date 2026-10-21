@@ -23,6 +23,11 @@ variable "nme_service_principal_name" {
   type        = string
 }
 
+variable "nme_service_principal_object_id" {
+  description = "Object ID of the existing Nerdio Manager (NME) Azure AD application's service principal (modules/service's azuread_service_principal_id output). Added as a member of the RTI SQL Server's Azure AD administrator group, alongside the deploying principal — required for Nerdio Manager's 'enable RTI' permission check."
+  type        = string
+}
+
 variable "protect_resources" {
   description = "Specifies whether RTI resources should be protected with management locks"
   type        = bool
