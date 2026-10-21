@@ -274,11 +274,32 @@ resource "null_resource" "promote_nme_app_sql_admin" {
 
       Write-Host "Setting Azure AD admin on '${var.rti_sql_server_name}' to '${var.nme_service_principal_name}' ..."
 
-      Set-AzSqlServerActiveDirectoryAdministrator `
-        -ResourceGroupName '${var.resource_group_name}' `
-        -ServerName '${var.rti_sql_server_name}' `
-        -DisplayName '${var.nme_service_principal_name}' `
-        -ObjectId '${var.nme_service_principal_object_id}'
+      # Set-AzSqlServerActiveDirectoryAdministrator resolves the principal against a
+      # directory backend that can lag behind SQL's own AAD integration (which
+      # Invoke-SqlUserBootstrap above already successfully resolved this same
+      # principal against) — retry on that specific transient failure.
+      $maxAttempts  = 10
+      $delaySeconds = 15
+      for ($i = 1; $i -le $maxAttempts; $i++) {
+        try {
+          Set-AzSqlServerActiveDirectoryAdministrator `
+            -ResourceGroupName '${var.resource_group_name}' `
+            -ServerName '${var.rti_sql_server_name}' `
+            -DisplayName '${var.nme_service_principal_name}' `
+            -ObjectId '${var.nme_service_principal_object_id}' `
+            -ErrorAction Stop
+          break
+        }
+        catch {
+          $msg = $_.Exception.Message
+          if ($msg -match 'Cannot find the Azure Active Directory object' -and $i -lt $maxAttempts) {
+            Write-Host "Attempt $i/$($maxAttempts): principal not yet resolvable for this operation (replication delay). Retrying in $delaySeconds s..."
+            Start-Sleep -Seconds $delaySeconds
+            continue
+          }
+          throw
+        }
+      }
 
       Write-Host "Azure AD admin set to '${var.nme_service_principal_name}'"
     EOT
